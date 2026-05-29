@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>电商管理后台</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon">🛒</span>
+        <div>
+          <h1>电商 REST API</h1>
+          <p>管理控制台</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-panel="dashboard">
+          <span class="nav-icon">📊</span>概览
+        </button>
+        <button class="nav-btn" data-panel="auth">
+          <span class="nav-icon">🔐</span>登录 / 注册
+        </button>
+        <button class="nav-btn" data-panel="stores" data-role="merchant">
+          <span class="nav-icon">🏪</span>我的店铺
+          <span class="nav-badge" id="nav-badge-stores">0</span>
+        </button>
+        <button class="nav-btn" data-panel="items">
+          <span class="nav-icon">📦</span><span id="nav-label-items">商品</span>
+          <span class="nav-badge" id="nav-badge-items">0</span>
+        </button>
+        <button class="nav-btn" data-panel="cart" data-role="customer">
+          <span class="nav-icon">🛍️</span>购物车
+          <span class="nav-badge nav-badge-cart" id="nav-badge-cart">0</span>
+        </button>
+        <button class="nav-btn" data-panel="tags" data-role="merchant">
+          <span class="nav-icon">🏷️</span>标签
+          <span class="nav-badge" id="nav-badge-tags">0</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="user-badge" class="user-badge hidden">
+          <span class="avatar" id="user-avatar">U</span>
+          <div class="user-info">
+            <span id="username-display" class="user-name"></span>
+            <span class="user-role">已登录</span>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-ghost btn-block hidden">退出登录</button>
+        <a href="/swagger-ui" target="_blank" class="link-muted">API 文档 →</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h2 id="page-title">概览</h2>
+          <p id="page-subtitle" class="page-subtitle">系统数据总览与快捷操作</p>
+        </div>
+        <div id="toast" class="toast hidden"></div>
+      </header>
+
+      <!-- 概览面板 -->
+      <section id="panel-dashboard" class="panel active">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-blue">🏪</div>
+            <div class="stat-body">
+              <span class="stat-label">店铺总数</span>
+              <span class="stat-value" id="stat-stores">—</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-teal">📦</div>
+            <div class="stat-body">
+              <span class="stat-label">商品总数</span>
+              <span class="stat-value" id="stat-items">—</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-purple">🏷️</div>
+            <div class="stat-body">
+              <span class="stat-label">标签总数</span>
+              <span class="stat-value" id="stat-tags">—</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-green">💰</div>
+            <div class="stat-body">
+              <span class="stat-label">商品均价</span>
+              <span class="stat-value" id="stat-avg-price">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-grid dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>快捷操作</h3>
+              <span class="card-badge">常用</span>
+            </div>
+            <div class="quick-actions">
+              <button class="quick-btn" data-goto="stores" data-role="merchant">
+                <span>🏪</span>
+                <span>我的店铺</span>
+              </button>
+              <button class="quick-btn" data-goto="items">
+                <span>📦</span>
+                <span id="quick-label-items">浏览商品</span>
+              </button>
+              <button class="quick-btn" data-goto="cart" data-role="customer">
+                <span>🛍️</span>
+                <span>我的购物车</span>
+              </button>
+              <button class="quick-btn" data-goto="tags" data-role="merchant">
+                <span>🏷️</span>
+                <span>管理标签</span>
+              </button>
+              <button class="quick-btn" data-goto="auth">
+                <span>🔐</span>
+                <span>登录账户</span>
+              </button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>最近商品</h3>
+              <button class="btn btn-ghost btn-sm" id="refresh-dashboard">刷新</button>
+            </div>
+            <ul class="recent-list" id="recent-items-list">
+              <li class="recent-empty">加载中…</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>店铺商品分布</h3>
+          </div>
+          <div class="distribution-list" id="store-distribution">
+            <p class="hint">加载中…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 登录面板 -->
+      <section id="panel-auth" class="panel">
+        <div class="section-intro">
+          <p>注册时请选择账户类型：<strong>购物用户</strong>可浏览商品并使用购物车；<strong>商家用户</strong>可创建店铺并上架商品。</p>
+          <div class="demo-credentials">
+            <span class="demo-label">购物用户</span>
+            <code>demo</code> / <code>demo1234</code>
+            <span class="demo-label">商家用户</span>
+            <code>merchant</code> / <code>merchant1234</code>
+          </div>
+        </div>
+        <div class="card-grid auth-grid">
+          <div class="card auth-card">
+            <div class="card-header">
+              <h3>登录</h3>
+              <span class="card-badge card-badge-blue">已有账号</span>
+            </div>
+            <form id="login-form" class="form">
+              <label>
+                <span class="label-text">用户名</span>
+                <input type="text" name="username" placeholder="至少 3 个字符" required minlength="3" autocomplete="username" />
+              </label>
+              <label>
+                <span class="label-text">密码</span>
+                <div class="input-with-toggle">
+                  <input type="password" name="password" placeholder="至少 6 个字符" required minlength="6" autocomplete="current-password" />
+                  <button type="button" class="toggle-pwd" aria-label="显示密码">👁</button>
+                </div>
+              </label>
+              <button type="submit" class="btn btn-primary btn-block">登录</button>
+            </form>
+          </div>
+          <div class="card auth-card">
+            <div class="card-header">
+              <h3>注册</h3>
+              <span class="card-badge card-badge-teal">新用户</span>
+            </div>
+            <form id="register-form" class="form">
+              <label>
+                <span class="label-text">用户名</span>
+                <input type="text" name="username" placeholder="至少 3 个字符" required minlength="3" autocomplete="username" />
+              </label>
+              <label>
+                <span class="label-text">密码</span>
+                <div class="input-with-toggle">
+                  <input type="password" name="password" placeholder="至少 6 个字符" required minlength="6" autocomplete="new-password" />
+                  <button type="button" class="toggle-pwd" aria-label="显示密码">👁</button>
+                </div>
+              </label>
+              <label>
+                <span class="label-text">账户类型</span>
+                <select name="role" required>
+                  <option value="customer">购物用户 — 浏览商品、使用购物车</option>
+                  <option value="merchant">商家用户 — 创建店铺、上架商品</option>
+                </select>
+              </label>
+              <button type="submit" class="btn btn-secondary btn-block">注册</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- 店铺面板 -->
+      <section id="panel-stores" class="panel" data-role="merchant">
+        <div class="section-intro">
+          <p>每位商家只能创建一个店铺，删除店铺将同时删除其下所有商品。</p>
+        </div>
+        <div class="card form-card" id="store-form-card">
+          <div class="card-header">
+            <h3>新增店铺</h3>
+          </div>
+          <form id="store-form" class="inline-form">
+            <label class="inline-label">
+              <span class="label-text">店铺名称</span>
+              <input type="text" name="name" placeholder="例如：旗舰店" required />
+            </label>
+            <button type="submit" class="btn btn-primary" disabled id="store-submit">添加店铺</button>
+          </form>
+        </div>
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="store-search" placeholder="搜索店铺名称…" />
+          </div>
+          <span class="result-count" id="stores-count"></span>
+          <button class="btn btn-ghost btn-sm" id="refresh-stores">刷新</button>
+        </div>
+        <div class="table-wrap">
+          <div class="loading-overlay hidden" id="stores-loading">
+            <div class="spinner"></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-id">ID</th>
+                <th>名称</th>
+                <th class="col-num">商品数</th>
+                <th class="actions-col">操作</th>
+              </tr>
+            </thead>
+            <tbody id="stores-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 商品面板 -->
+      <section id="panel-items" class="panel">
+        <div class="section-intro" id="items-intro-customer">
+          <p>浏览全部商品，登录后可将商品加入购物车。</p>
+        </div>
+        <div class="section-intro hidden" id="items-intro-merchant">
+          <p>管理您店铺中的商品，只能在自己的店铺中上架商品。</p>
+        </div>
+        <div class="card form-card" id="item-form-card" data-role="merchant">
+          <div class="card-header">
+            <h3>新增商品</h3>
+          </div>
+          <form id="item-form" class="inline-form wrap">
+            <label class="inline-label">
+              <span class="label-text">商品名称</span>
+              <input type="text" name="name" placeholder="例如：无线耳机" required />
+            </label>
+            <label class="inline-label">
+              <span class="label-text">价格 (¥)</span>
+              <input type="number" name="price" placeholder="0.00" step="0.01" min="0" required />
+            </label>
+            <label class="inline-label">
+              <span class="label-text">所属店铺</span>
+              <select name="store_id" id="item-store-select" required>
+                <option value="">选择店铺</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn-primary" disabled id="item-submit">添加商品</button>
+          </form>
+        </div>
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="item-search" placeholder="搜索商品名称…" />
+          </div>
+          <select id="item-filter-store" class="filter-select">
+            <option value="">全部店铺</option>
+          </select>
+          <span class="result-count" id="items-count"></span>
+          <button class="btn btn-ghost btn-sm" id="refresh-items">刷新</button>
+        </div>
+        <div class="table-wrap">
+          <div class="loading-overlay hidden" id="items-loading">
+            <div class="spinner"></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-id">ID</th>
+                <th>名称</th>
+                <th class="col-price">价格</th>
+                <th>店铺</th>
+                <th>标签</th>
+                <th class="actions-col actions-col-wide">操作</th>
+              </tr>
+            </thead>
+            <tbody id="items-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 购物车面板 -->
+      <section id="panel-cart" class="panel">
+        <div class="section-intro" id="cart-intro">
+          <p>登录后可管理购物车，将商品加入购物车并调整数量。</p>
+        </div>
+        <div id="cart-login-hint" class="card cart-login-card hidden">
+          <div class="empty-state">
+            <span class="empty-icon">🔐</span>
+            <span id="cart-hint-message">请先登录后再使用购物车</span>
+            <button class="btn btn-primary btn-sm" id="cart-hint-action" data-goto="auth">去登录</button>
+          </div>
+        </div>
+        <div id="cart-content" class="hidden">
+          <div class="cart-summary">
+            <div class="cart-summary-item">
+              <span class="cart-summary-label">商品种类</span>
+              <span class="cart-summary-value" id="cart-kind-count">0</span>
+            </div>
+            <div class="cart-summary-item">
+              <span class="cart-summary-label">商品总数</span>
+              <span class="cart-summary-value" id="cart-total-qty">0</span>
+            </div>
+            <div class="cart-summary-item cart-summary-total">
+              <span class="cart-summary-label">合计金额</span>
+              <span class="cart-summary-value" id="cart-total-price">¥0.00</span>
+            </div>
+          </div>
+          <div class="toolbar">
+            <span class="result-count" id="cart-count"></span>
+            <button class="btn btn-ghost btn-sm" id="refresh-cart">刷新</button>
+            <button class="btn btn-danger btn-sm" id="clear-cart">清空购物车</button>
+          </div>
+          <div class="table-wrap">
+            <div class="loading-overlay hidden" id="cart-loading">
+              <div class="spinner"></div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>商品</th>
+                  <th class="col-price">单价</th>
+                  <th class="col-qty">数量</th>
+                  <th class="col-price">小计</th>
+                  <th class="actions-col">操作</th>
+                </tr>
+              </thead>
+              <tbody id="cart-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 标签面板 -->
+      <section id="panel-tags" class="panel" data-role="merchant">
+        <div class="section-intro">
+          <p>标签用于给商品分类，同一商品可关联多个标签。</p>
+        </div>
+        <div class="card-grid tags-grid">
+          <div class="card form-card">
+            <div class="card-header">
+              <h3>新增标签</h3>
+            </div>
+            <form id="tag-form" class="inline-form">
+              <label class="inline-label">
+                <span class="label-text">标签名称</span>
+                <input type="text" name="name" placeholder="例如：电子产品" required />
+              </label>
+              <button type="submit" class="btn btn-primary" disabled id="tag-submit">添加标签</button>
+            </form>
+          </div>
+          <div class="card form-card">
+            <div class="card-header">
+              <h3>关联标签到商品</h3>
+            </div>
+            <form id="link-tag-form" class="inline-form wrap">
+              <label class="inline-label">
+                <span class="label-text">选择商品</span>
+                <select name="item_id" id="link-item-select" required>
+                  <option value="">选择商品</option>
+                </select>
+              </label>
+              <label class="inline-label">
+                <span class="label-text">选择标签</span>
+                <select name="tag_id" id="link-tag-select" required>
+                  <option value="">选择标签</option>
+                </select>
+              </label>
+              <button type="submit" class="btn btn-secondary" disabled id="link-submit">关联</button>
+            </form>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="tag-search" placeholder="搜索标签名称…" />
+          </div>
+          <span class="result-count" id="tags-count"></span>
+          <button class="btn btn-ghost btn-sm" id="refresh-tags">刷新</button>
+        </div>
+        <div class="table-wrap">
+          <div class="loading-overlay hidden" id="tags-loading">
+            <div class="spinner"></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-id">ID</th>
+                <th>名称</th>
+                <th class="col-num">关联商品数</th>
+              </tr>
+            </thead>
+            <tbody id="tags-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 id="modal-title">编辑</h3>
+      <form id="modal-form" class="form"></form>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modal-cancel">取消</button>
+        <button type="submit" form="modal-form" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-sm">
+      <h3 id="confirm-title">确认操作</h3>
+      <p id="confirm-message" class="confirm-text"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="confirm-cancel">取消</button>
+        <button type="button" class="btn btn-danger-solid" id="confirm-ok">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
