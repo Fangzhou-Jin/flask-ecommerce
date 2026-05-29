@@ -26,7 +26,14 @@ def run_migrations() -> None:
     store_cols = _column_names("stores")
     if store_cols and "owner_id" not in store_cols:
         dialect = db.engine.dialect.name
-        if dialect == "mysql":
+        if dialect == "postgresql":
+            db.session.execute(
+                text(
+                    "ALTER TABLE stores ADD COLUMN owner_id INTEGER "
+                    "REFERENCES users(id) ON DELETE CASCADE"
+                )
+            )
+        elif dialect == "mysql":
             db.session.execute(text("ALTER TABLE stores ADD COLUMN owner_id INTEGER NULL"))
             db.session.execute(
                 text(

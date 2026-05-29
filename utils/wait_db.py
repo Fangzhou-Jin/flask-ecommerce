@@ -1,4 +1,4 @@
-"""Wait until MySQL is ready to accept connections (Docker startup)."""
+"""Wait until the database is ready to accept connections (Docker startup)."""
 
 import time
 

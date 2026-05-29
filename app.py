@@ -43,7 +43,7 @@ def create_app(test_config=None):
         "sqlite:///" + os.path.join(instance_path, "data.db"),
     )
 
-    # Resolve relative SQLite paths only (MySQL URI is used as-is)
+    # Resolve relative SQLite paths only (PostgreSQL URI is used as-is)
     if db_uri.startswith("sqlite:///") and not db_uri.startswith("sqlite:////"):
         relative_path = db_uri.replace("sqlite:///", "", 1)
         if not os.path.isabs(relative_path):
@@ -86,7 +86,7 @@ def create_app(test_config=None):
     with app.app_context():
         import models  # noqa: F401
 
-        if db_uri.startswith("mysql"):
+        if db_uri.startswith(("postgresql", "postgres")):
             from utils.wait_db import wait_for_db
 
             wait_for_db()

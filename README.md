@@ -12,7 +12,7 @@ University software architecture project: a modular e-commerce backend API built
 | Flask-SQLAlchemy   | ORM                                           |
 | Flask-JWT-Extended | JWT authentication                            |
 | Marshmallow        | Request/response validation and serialization |
-| MySQL 8            | Database (via PyMySQL)                        |
+| PostgreSQL         | Database (via psycopg2)                       |
 | Docker             | Containerized deployment                      |
 
 ## Project Structure
@@ -57,10 +57,10 @@ Store 1 ──< * Item
 
 ### Local Development
 
-Start MySQL first (easiest via Docker):
+Start PostgreSQL first (easiest via Docker):
 
 ```bash
-docker compose up mysql -d
+docker compose up postgres -d
 ```
 
 Then run the API on your machine:
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 flask run --port 5001
 ```
 
-The default `.env` connects to `127.0.0.1:3307` with user `ecommerce` / password `ecommerce123` (port 3307 avoids conflict with local MySQL on 3306).
+The default `.env` connects to `127.0.0.1:5433` with user `ecommerce` / password `ecommerce123` (port 5433 avoids conflict with local PostgreSQL on 5432).
 
 Visit:
 
@@ -90,7 +90,7 @@ The web dashboard (`templates/` + `static/`) provides:
 - Many-to-many linking between items and tags
 - Full integration with the REST API; no build step required
 
-### Docker (API + MySQL)
+### Docker (API + PostgreSQL)
 
 ```bash
 docker compose up --build
@@ -98,10 +98,10 @@ docker compose up --build
 
 This starts:
 
-- **MySQL 8** on port `3307` (mapped to container 3306; data persisted in volume `mysql_data`)
+- **PostgreSQL 16** on port `5433` (mapped to container 5432; data persisted in volume `postgres_data`)
 - **Flask API** on port `5001`
 
-Build the API image only (requires external MySQL):
+Build the API image only (requires external PostgreSQL):
 
 ```bash
 docker build -t ecommerce-api .

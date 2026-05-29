@@ -8,21 +8,21 @@ const ROLES = {
 };
 
 const TITLES = {
-  dashboard: "概览",
-  auth: "登录 / 注册",
-  stores: "我的店铺",
-  items: "商品",
-  cart: "购物车",
-  tags: "标签管理",
+  dashboard: "Overview",
+  auth: "Login / Register",
+  stores: "My Store",
+  items: "Items",
+  cart: "Cart",
+  tags: "Tag Management",
 };
 
 const SUBTITLES = {
-  dashboard: "系统数据总览与快捷操作",
-  auth: "选择账户类型并登录",
-  stores: "商家专属：创建和管理您的店铺",
-  items: "浏览商品或管理店铺商品",
-  cart: "购物用户专属：查看与管理已选商品",
-  tags: "商家专属：标签分类与商品关联",
+  dashboard: "System summary and quick actions",
+  auth: "Choose account type and sign in",
+  stores: "Merchants only: create and manage your store",
+  items: "Browse items or manage your store products",
+  cart: "Customers only: view and manage selected items",
+  tags: "Merchants only: tag categories and item links",
 };
 
 let storesCache = [];
@@ -115,19 +115,19 @@ function applyRoleUI() {
 
   const itemsLabel = document.getElementById("nav-label-items");
   const quickItemsLabel = document.getElementById("quick-label-items");
-  const itemsTitle = loggedIn && isMerchant() ? "我的商品" : "商品浏览";
+  const itemsTitle = loggedIn && isMerchant() ? "My Items" : "Browse Items";
   if (itemsLabel) itemsLabel.textContent = itemsTitle;
-  if (quickItemsLabel) quickItemsLabel.textContent = loggedIn && isMerchant() ? "我的商品" : "浏览商品";
+  if (quickItemsLabel) quickItemsLabel.textContent = loggedIn && isMerchant() ? "My Items" : "Browse Items";
 
   document.getElementById("items-intro-customer")?.classList.toggle("hidden", loggedIn && isMerchant());
   document.getElementById("items-intro-merchant")?.classList.toggle("hidden", !loggedIn || !isMerchant());
   document.getElementById("item-form-card")?.classList.toggle("hidden", !canManageItems());
   document.getElementById("item-filter-store")?.classList.toggle("hidden", loggedIn && isMerchant());
 
-  const roleLabels = { merchant: "商家用户", customer: "购物用户" };
+  const roleLabels = { merchant: "Merchant", customer: "Customer" };
   const roleEl = document.querySelector(".user-role");
   if (roleEl) {
-    roleEl.textContent = loggedIn ? roleLabels[role] || "已登录" : "";
+    roleEl.textContent = loggedIn ? roleLabels[role] || "Signed in" : "";
   }
 
   ["store-submit", "item-submit", "tag-submit", "link-submit"].forEach((id) => {
@@ -160,11 +160,11 @@ function updateAuthUI() {
 function switchPanel(name) {
   const role = getUserRole();
   if (name === "cart" && role === ROLES.MERCHANT) {
-    showToast("商家账户无法使用购物车", "error");
+    showToast("Merchant accounts cannot use the cart", "error");
     return;
   }
   if ((name === "stores" || name === "tags") && isLoggedIn() && role === ROLES.CUSTOMER) {
-    showToast("购物用户无法访问该功能", "error");
+    showToast("Customer accounts cannot access this section", "error");
     return;
   }
 
@@ -267,7 +267,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     API.setToken(result.access_token);
     API.setUser(result.user);
     updateAuthUI();
-    showToast(`欢迎回来，${result.user.username}！`, "success");
+    showToast(`Welcome back, ${result.user.username}!`, "success");
     e.target.reset();
     await updateCartBadge();
   } catch (err) {
@@ -280,7 +280,7 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
   const fd = new FormData(e.target);
   try {
     await API.register(fd.get("username"), fd.get("password"), fd.get("role"));
-    showToast("注册成功，请登录。", "success");
+    showToast("Registration successful. Please sign in.", "success");
     e.target.reset();
   } catch (err) {
     showToast(err.message, "error");
@@ -291,7 +291,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   API.setToken(null);
   API.setUser(null);
   updateAuthUI();
-  showToast("已退出登录", "info");
+  showToast("Logged out", "info");
   switchPanel("auth");
 });
 
@@ -316,24 +316,24 @@ function renderDashboard() {
   document.getElementById("stat-stores").textContent = storeCount;
   document.getElementById("stat-items").textContent = itemCount;
   document.getElementById("stat-tags").textContent = tagCount;
-  document.getElementById("stat-avg-price").textContent = itemCount ? `¥${avgPrice.toFixed(2)}` : "—";
+  document.getElementById("stat-avg-price").textContent = itemCount ? `$${avgPrice.toFixed(2)}` : "—";
 
   const recentList = document.getElementById("recent-items-list");
   if (!itemsCache.length) {
-    recentList.innerHTML = `<li class="recent-empty">暂无商品数据</li>`;
+    recentList.innerHTML = `<li class="recent-empty">No items yet</li>`;
   } else {
     const recent = [...itemsCache].slice(-5).reverse();
     recentList.innerHTML = recent
       .map(
         (item) =>
-          `<li><span class="item-name">${escapeHtml(item.name)}</span><span class="item-price">¥${Number(item.price).toFixed(2)}</span></li>`
+          `<li><span class="item-name">${escapeHtml(item.name)}</span><span class="item-price">$${Number(item.price).toFixed(2)}</span></li>`
       )
       .join("");
   }
 
   const distEl = document.getElementById("store-distribution");
   if (!storesCache.length) {
-    distEl.innerHTML = `<p class="hint">暂无店铺数据</p>`;
+    distEl.innerHTML = `<p class="hint">No store data yet</p>`;
     return;
   }
 
@@ -346,7 +346,7 @@ function renderDashboard() {
         <div class="dist-row">
           <span class="dist-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
           <div class="dist-bar-wrap"><div class="dist-bar" style="width:${pct}%"></div></div>
-          <span class="dist-count">${count} 件</span>
+          <span class="dist-count">${count} items</span>
         </div>`;
     })
     .join("");
@@ -370,7 +370,7 @@ document.getElementById("refresh-dashboard").addEventListener("click", async () 
   itemsCache = await API.getItems();
   tagsCache = await API.getTags();
   renderDashboard();
-  showToast("数据已刷新", "success");
+  showToast("Data refreshed", "success");
 });
 
 document.querySelectorAll(".quick-btn").forEach((btn) => {
@@ -393,7 +393,7 @@ function getFilteredStores() {
 function renderStores() {
   const filtered = getFilteredStores();
   const tbody = document.getElementById("stores-tbody");
-  document.getElementById("stores-count").textContent = `共 ${filtered.length} 条`;
+  document.getElementById("stores-count").textContent = `${filtered.length} result(s)`;
 
   document.getElementById("store-form-card")?.classList.toggle(
     "hidden",
@@ -402,10 +402,10 @@ function renderStores() {
 
   if (!filtered.length) {
     const emptyMsg = canManageStores()
-      ? "您还没有店铺，请先创建"
+      ? "You don't have a store yet — create one first"
       : storeSearchQuery
-        ? "未找到匹配的店铺"
-        : "暂无店铺";
+        ? "No matching stores"
+        : "No stores yet";
     tbody.innerHTML = `<tr class="empty-row"><td colspan="4"><div class="empty-state"><span class="empty-icon">🏪</span><span>${emptyMsg}</span></div></td></tr>`;
     updateNavBadges();
     return;
@@ -421,8 +421,8 @@ function renderStores() {
       <td><strong>${escapeHtml(s.name)}</strong></td>
       <td class="col-num"><span class="count-badge">${itemCount}</span></td>
       <td>
-        <button class="btn btn-edit" data-edit-store="${s.id}" ${canEdit ? "" : "disabled"}>编辑</button>
-        <button class="btn btn-danger" data-del-store="${s.id}" ${canEdit ? "" : "disabled"}>删除</button>
+        <button class="btn btn-edit" data-edit-store="${s.id}" ${canEdit ? "" : "disabled"}>Edit</button>
+        <button class="btn btn-danger" data-del-store="${s.id}" ${canEdit ? "" : "disabled"}>Delete</button>
       </td>
     </tr>`;
     })
@@ -464,7 +464,7 @@ document.getElementById("store-form").addEventListener("submit", async (e) => {
   try {
     await API.createStore(name);
     e.target.reset();
-    showToast("店铺创建成功", "success");
+    showToast("Store created", "success");
     await loadStores();
   } catch (err) {
     showToast(err.message, "error");
@@ -484,11 +484,11 @@ document.getElementById("stores-tbody").addEventListener("click", async (e) => {
 
   if (editId) {
     const store = storesCache.find((s) => s.id === Number(editId));
-    openModal("编辑店铺", [{ label: "店铺名称", name: "name", value: store.name }], async (data) => {
+    openModal("Edit Store", [{ label: "Store name", name: "name", value: store.name }], async (data) => {
       try {
         await API.updateStore(editId, data.name);
         closeModal();
-        showToast("店铺已更新", "success");
+        showToast("Store updated", "success");
         await loadStores();
       } catch (err) {
         showToast(err.message, "error");
@@ -500,12 +500,12 @@ document.getElementById("stores-tbody").addEventListener("click", async (e) => {
     const store = storesCache.find((s) => s.id === Number(delId));
     const itemCount = countItemsByStore(store.id);
     openConfirm(
-      "删除店铺",
-      `确定删除「${store.name}」吗？${itemCount ? `该店铺下有 ${itemCount} 件商品，将一并删除。` : ""}`,
+      "Delete Store",
+      `Delete "${store.name}"?${itemCount ? ` This will also remove ${itemCount} item(s) in the store.` : ""}`,
       async () => {
         try {
           await API.deleteStore(delId);
-          showToast("店铺已删除", "success");
+          showToast("Store deleted", "success");
           itemsCache = [];
           await loadStores();
         } catch (err) {
@@ -521,7 +521,7 @@ function refreshStoreSelects() {
   const catalogStores = storesCache;
 
   const options =
-    `<option value="">选择店铺</option>` +
+    `<option value="">Select store</option>` +
     catalogStores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("");
 
   const itemStoreSelect = document.getElementById("item-store-select");
@@ -538,7 +538,7 @@ function refreshStoreSelects() {
   const filterSelect = document.getElementById("item-filter-store");
   const current = filterSelect.value;
   filterSelect.innerHTML =
-    `<option value="">全部店铺</option>` +
+    `<option value="">All stores</option>` +
     catalogStores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("");
   filterSelect.value = current;
 }
@@ -560,15 +560,15 @@ function getFilteredItems() {
 function renderItems() {
   const filtered = getFilteredItems();
   const tbody = document.getElementById("items-tbody");
-  document.getElementById("items-count").textContent = `共 ${filtered.length} 条`;
+  document.getElementById("items-count").textContent = `${filtered.length} result(s)`;
 
   if (!filtered.length) {
     const emptyMsg =
       itemSearchQuery || itemFilterStoreId
-        ? "未找到匹配的商品"
+        ? "No matching items"
         : canManageItems()
-          ? "您的店铺还没有商品，请先添加"
-          : "暂无商品";
+          ? "No items in your store yet — add one"
+          : "No items yet";
     tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><div class="empty-state"><span class="empty-icon">📦</span><span>${emptyMsg}</span></div></td></tr>`;
     return;
   }
@@ -582,11 +582,11 @@ function renderItems() {
 
       let actions = "";
       if (canUseCart()) {
-        actions += `<button class="btn btn-cart" data-add-cart="${item.id}" title="加入购物车">🛒</button>`;
+        actions += `<button class="btn btn-cart" data-add-cart="${item.id}" title="Add to cart">🛒</button>`;
       }
       if (canManageItems()) {
-        actions += `<button class="btn btn-edit" data-edit-item="${item.id}">编辑</button>`;
-        actions += `<button class="btn btn-danger" data-del-item="${item.id}">删除</button>`;
+        actions += `<button class="btn btn-edit" data-edit-item="${item.id}">Edit</button>`;
+        actions += `<button class="btn btn-danger" data-del-item="${item.id}">Delete</button>`;
       }
       if (!actions) {
         actions = '<span style="color:var(--muted)">—</span>';
@@ -596,7 +596,7 @@ function renderItems() {
     <tr>
       <td class="col-id">${item.id}</td>
       <td><strong>${escapeHtml(item.name)}</strong></td>
-      <td class="price-cell">¥${Number(item.price).toFixed(2)}</td>
+      <td class="price-cell">$${Number(item.price).toFixed(2)}</td>
       <td>${store ? `<span class="store-chip">${escapeHtml(store.name)}</span>` : item.store_id}</td>
       <td>${tags || '<span style="color:var(--muted)">—</span>'}</td>
       <td>${actions}</td>
@@ -642,7 +642,7 @@ document.getElementById("item-form").addEventListener("submit", async (e) => {
     : parseInt(fd.get("store_id"), 10);
 
   if (!storeId) {
-    showToast("请先创建店铺再添加商品", "error");
+    showToast("Create a store before adding items", "error");
     return;
   }
 
@@ -653,7 +653,7 @@ document.getElementById("item-form").addEventListener("submit", async (e) => {
       store_id: storeId,
     });
     e.target.reset();
-    showToast("商品创建成功", "success");
+    showToast("Item created", "success");
     await loadItems();
   } catch (err) {
     showToast(err.message, "error");
@@ -681,7 +681,7 @@ document.getElementById("items-tbody").addEventListener("click", async (e) => {
     try {
       cartCache = await API.addToCart(addId, 1);
       updateNavBadges();
-      showToast("已加入购物车", "success");
+      showToast("Added to cart", "success");
     } catch (err) {
       showToast(err.message, "error");
     }
@@ -691,12 +691,12 @@ document.getElementById("items-tbody").addEventListener("click", async (e) => {
   if (editId) {
     const item = itemsCache.find((i) => i.id === Number(editId));
     openModal(
-      "编辑商品",
+      "Edit Item",
       [
-        { label: "商品名称", name: "name", value: item.name },
-        { label: "价格 (¥)", name: "price", type: "number", value: item.price, attrs: 'step="0.01" min="0"' },
+        { label: "Item name", name: "name", value: item.name },
+        { label: "Price ($)", name: "price", type: "number", value: item.price, attrs: 'step="0.01" min="0"' },
         {
-          label: "所属店铺",
+          label: "Store",
           name: "store_id",
           type: "select",
           value: item.store_id,
@@ -711,7 +711,7 @@ document.getElementById("items-tbody").addEventListener("click", async (e) => {
             store_id: parseInt(data.store_id, 10),
           });
           closeModal();
-          showToast("商品已更新", "success");
+          showToast("Item updated", "success");
           await loadItems();
         } catch (err) {
           showToast(err.message, "error");
@@ -722,10 +722,10 @@ document.getElementById("items-tbody").addEventListener("click", async (e) => {
 
   if (delId) {
     const item = itemsCache.find((i) => i.id === Number(delId));
-    openConfirm("删除商品", `确定删除「${item.name}」吗？此操作不可撤销。`, async () => {
+    openConfirm("Delete Item", `Delete "${item.name}"? This cannot be undone.`, async () => {
       try {
         await API.deleteItem(delId);
-        showToast("商品已删除", "success");
+        showToast("Item deleted", "success");
         await loadItems();
       } catch (err) {
         showToast(err.message, "error");
@@ -737,12 +737,12 @@ document.getElementById("items-tbody").addEventListener("click", async (e) => {
 function refreshLinkSelects() {
   const itemSelect = document.getElementById("link-item-select");
   itemSelect.innerHTML =
-    `<option value="">选择商品</option>` +
+    `<option value="">Select item</option>` +
     itemsCache.map((i) => `<option value="${i.id}">${escapeHtml(i.name)}</option>`).join("");
 
   const tagSelect = document.getElementById("link-tag-select");
   tagSelect.innerHTML =
-    `<option value="">选择标签</option>` +
+    `<option value="">Select tag</option>` +
     tagsCache.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
 }
 
@@ -761,11 +761,11 @@ function renderCart() {
     const hintAction = document.getElementById("cart-hint-action");
     if (loggedIn && isMerchant()) {
       document.getElementById("cart-login-hint").classList.remove("hidden");
-      if (hintMsg) hintMsg.textContent = "商家账户无法使用购物车，请使用购物用户账户";
+      if (hintMsg) hintMsg.textContent = "Merchant accounts cannot use the cart. Please sign in as a customer.";
       hintAction?.classList.add("hidden");
     } else if (!loggedIn) {
       document.getElementById("cart-login-hint").classList.remove("hidden");
-      if (hintMsg) hintMsg.textContent = "请先登录后再使用购物车";
+      if (hintMsg) hintMsg.textContent = "Please sign in to use the cart";
       hintAction?.classList.remove("hidden");
     }
     return;
@@ -776,11 +776,11 @@ function renderCart() {
 
   document.getElementById("cart-kind-count").textContent = lines.length;
   document.getElementById("cart-total-qty").textContent = cartCache.total_quantity;
-  document.getElementById("cart-total-price").textContent = `¥${Number(cartCache.total_price).toFixed(2)}`;
-  document.getElementById("cart-count").textContent = `共 ${lines.length} 种商品`;
+  document.getElementById("cart-total-price").textContent = `$${Number(cartCache.total_price).toFixed(2)}`;
+  document.getElementById("cart-count").textContent = `${lines.length} unique item(s)`;
 
   if (!lines.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="5"><div class="empty-state"><span class="empty-icon">🛍️</span><span>购物车是空的，去商品页挑选吧</span><button class="btn btn-primary btn-sm" data-goto="items">浏览商品</button></div></td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5"><div class="empty-state"><span class="empty-icon">🛍️</span><span>Your cart is empty — browse items to get started</span><button class="btn btn-primary btn-sm" data-goto="items">Browse Items</button></div></td></tr>`;
     return;
   }
 
@@ -794,7 +794,7 @@ function renderCart() {
         <div class="cart-item-name">${escapeHtml(item.name || "—")}</div>
         ${store ? `<span class="store-chip">${escapeHtml(store.name)}</span>` : ""}
       </td>
-      <td class="price-cell">¥${Number(item.price || 0).toFixed(2)}</td>
+      <td class="price-cell">$${Number(item.price || 0).toFixed(2)}</td>
       <td class="col-qty">
         <div class="qty-control">
           <button class="qty-btn" data-cart-dec="${line.item_id}" ${line.quantity <= 1 ? "disabled" : ""}>−</button>
@@ -802,9 +802,9 @@ function renderCart() {
           <button class="qty-btn" data-cart-inc="${line.item_id}">+</button>
         </div>
       </td>
-      <td class="price-cell">¥${Number(line.subtotal).toFixed(2)}</td>
+      <td class="price-cell">$${Number(line.subtotal).toFixed(2)}</td>
       <td>
-        <button class="btn btn-danger" data-cart-remove="${line.item_id}">移除</button>
+        <button class="btn btn-danger" data-cart-remove="${line.item_id}">Remove</button>
       </td>
     </tr>`;
     })
@@ -835,14 +835,14 @@ document.getElementById("refresh-cart").addEventListener("click", loadCart);
 
 document.getElementById("clear-cart").addEventListener("click", () => {
   if (!cartCache?.items?.length) {
-    showToast("购物车已经是空的", "info");
+    showToast("Your cart is already empty", "info");
     return;
   }
-  openConfirm("清空购物车", "确定要清空购物车中的所有商品吗？", async () => {
+  openConfirm("Clear Cart", "Remove all items from your cart?", async () => {
     try {
       cartCache = await API.clearCart();
       renderCart();
-      showToast("购物车已清空", "success");
+      showToast("Cart cleared", "success");
     } catch (err) {
       showToast(err.message, "error");
     }
@@ -879,11 +879,11 @@ document.getElementById("cart-tbody").addEventListener("click", async (e) => {
 
   if (removeId) {
     const line = cartCache.items.find((l) => l.item_id === Number(removeId));
-    openConfirm("移除商品", `确定从购物车移除「${line.item?.name}」吗？`, async () => {
+    openConfirm("Remove Item", `Remove "${line.item?.name}" from your cart?`, async () => {
       try {
         cartCache = await API.removeFromCart(removeId);
         renderCart();
-        showToast("已从购物车移除", "success");
+        showToast("Removed from cart", "success");
       } catch (err) {
         showToast(err.message, "error");
       }
@@ -902,10 +902,10 @@ function getFilteredTags() {
 function renderTags() {
   const filtered = getFilteredTags();
   const tbody = document.getElementById("tags-tbody");
-  document.getElementById("tags-count").textContent = `共 ${filtered.length} 条`;
+  document.getElementById("tags-count").textContent = `${filtered.length} result(s)`;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="3"><div class="empty-state"><span class="empty-icon">🏷️</span><span>${tagSearchQuery ? "未找到匹配的标签" : "暂无标签，请先添加"}</span></div></td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="3"><div class="empty-state"><span class="empty-icon">🏷️</span><span>${tagSearchQuery ? "No matching tags" : "No tags yet — add one first"}</span></div></td></tr>`;
     return;
   }
 
@@ -947,7 +947,7 @@ document.getElementById("tag-form").addEventListener("submit", async (e) => {
   try {
     await API.createTag(name);
     e.target.reset();
-    showToast("标签创建成功", "success");
+    showToast("Tag created", "success");
     await loadTags();
   } catch (err) {
     showToast(err.message, "error");
@@ -959,7 +959,7 @@ document.getElementById("link-tag-form").addEventListener("submit", async (e) =>
   const fd = new FormData(e.target);
   try {
     await API.linkTagToItem(fd.get("item_id"), fd.get("tag_id"));
-    showToast("标签关联成功", "success");
+    showToast("Tag linked successfully", "success");
     await loadItems();
     await loadTags();
   } catch (err) {
